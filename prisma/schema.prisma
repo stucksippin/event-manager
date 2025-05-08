@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Calendar {
+  id        String   @id @default(uuid()) // Уникальный идентификатор
+  name      String // Название календаря
+  type      String // user | team
+  createdAt DateTime @default(now()) // Время создания
+
+  // Владелец
+  owner   User   @relation("OwnedCalendars", fields: [ownerId], references: [id])
+  ownerId String
+
+  // Участники (только для team)
+  members User[] @relation("CalendarMembers")
+
+  // Задачи
+  tasks Task[]
+
+  // Приглашения
+  invitations Invitation[] // новая связь
+
+  // Обратные отношения для Invite
+  invites Invite[]
+}
+
+model User {
+  id                  String       @id @default(uuid())
+  name                String?
+  email               String       @unique
+  passwordHash        String
+  emailVerified       DateTime?
+  image               String?
+  accounts            Account[]
+  sessions            Session[]
+  invitationsSent     Invitation[] @relation("SentInvitations")
+  invitationsReceived Invitation[] @relation("ReceivedInvitations")
+
+  // Обратные отношения
+  OwnedCalendars  Calendar[] @relation("OwnedCalendars")
+  CalendarMembers Calendar[] @relation("CalendarMembers")
+
+  // Обратные отношения для Invite
+  invites Invite[]
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id])
+  provider          String
+  providerAccountId String  @unique
+  type              String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         Int?
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  expires      DateTime
+  sessionToken String   @unique
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  title       String // Название задачи
+  description String? // Описание задачи
+  date        DateTime
+  dueDate     DateTime? // Срок выполнения задачи
+  calendarId  String
+  calendar    Calendar  @relation(fields: [calendarId], references: [id])
+  createdAt   DateTime  @default(now())
+}
+
+model Invitation {
+  id         String   @id @default(uuid())
+  calendar   Calendar @relation(fields: [calendarId], references: [id])
+  calendarId String
+  inviter    User     @relation("SentInvitations", fields: [inviterId], references: [id])
+  inviterId  String
+  invitee    User     @relation("ReceivedInvitations", fields: [inviteeId], references: [id])
+  inviteeId  String
+  status     String   @default("PENDING") // PENDING | ACCEPTED | REJECTED
+  createdAt  DateTime @default(now())
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Invite {
+  id            String   @id @default(uuid())
+  calendar      Calendar @relation(fields: [calendarId], references: [id])
+  calendarId    String
+  invited       User     @relation(fields: [invitedUserId], references: [id])
+  invitedUserId String
+  status        String   @default("pending") // pending | accepted | declined
+  createdAt     DateTime @default(now())
+}

@@ -1,0 +1,10 @@
+/* app/auth.css */
+.auth-container {
+  min-height: 100vh;               /* растягивает контейнер на весь экран */
+  display: flex;                   
+  justify-content: center;         /* центрирует по горизонтали */
+  align-items: center;             /* центрирует по вертикали */
+  background: #f0f2f5;             /* тот же серо-голубой фон, что и у формы входа */
+  padding: 0 16px;                 /* немного отступа по бокам для мобильных */
+  box-sizing: border-box;
+}
