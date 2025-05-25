@@ -23,12 +23,12 @@ export default function CalendarPage() {
   const { id: calendarId } = useParams()
   const { data: session, status } = useSession()
 
-  const calendars      = useCalendarStore((s) => s.calendars)
+  const calendars = useCalendarStore((s) => s.calendars)
   const fetchCalendars = useCalendarStore((s) => s.fetchCalendars)
 
-  const [calendar, setCalendar]           = useState(null)
-  const [inviteEmail, setInviteEmail]     = useState('')
-  const [inviteError, setInviteError]     = useState(null)
+  const [calendar, setCalendar] = useState(null)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteError, setInviteError] = useState(null)
   const [inviteSuccess, setInviteSuccess] = useState(null)
   const [loadingInvite, setLoadingInvite] = useState(false)
 
@@ -47,7 +47,7 @@ export default function CalendarPage() {
     return <div>Календарь не найден...</div>
   }
 
-  const isTeam  = calendar.type === 'team'
+  const isTeam = calendar.type === 'team'
   const isOwner = calendar.ownerId === session.user.id
 
   const handleInvite = async () => {
@@ -100,14 +100,12 @@ export default function CalendarPage() {
           {inviteSuccess && <Alert type="success" message={inviteSuccess} style={{ marginTop: 8 }} />}
         </Card>
       )}
-      
+
       {/* Если хотите список задач под календарём */}
       <TaskList calendarId={calendarId} />
-
       {/* Основной календарь с задачами */}
       <CalendarView calendarId={calendarId} />
 
-      <InviteModal calendarId={calendar.id} />
     </Content>
   )
 }
