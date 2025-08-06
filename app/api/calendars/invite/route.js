@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../../auth/[...nextauth]/auth.config'
-import prisma from '@/libs/prisma'
+import { authOptions } from '../../auth/[...nextauth]/route'  // если твои next-auth маршруты лежат в /api/auth
+import prisma from '../../../../libs/prisma'
 
 export async function POST(req) {
   const { calendarId, email } = await req.json()

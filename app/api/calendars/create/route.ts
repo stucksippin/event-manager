@@ -1,111 +1,51 @@
+// app/api/calendars/create/route.ts
+
 import { NextResponse } from 'next/server'
+import prisma from '../../../../libs/prisma'
 import { getServerSession } from 'next-auth/next'
+import { authOptions } from '../../auth/[...nextauth]/route'
 
-import prisma from '@/libs/prisma'
-import { authOptions } from '../../auth/[...nextauth]/auth.config'
-
-// 1. Определяем строгие типы
-type CalendarType = 'personal' | 'team'
 interface RequestBody {
-  name: string
-  type: CalendarType
+  name: string;
+  type: 'personal' | 'team'; // или другие возможные типы календарей
 }
 
-// 2. Вспомогательная функция для валидации
-function validateRequestBody(body: any): body is RequestBody {
-  return (
-    typeof body === 'object' &&
-    typeof body.name === 'string' &&
-    ['personal', 'team'].includes(body.type)
-  )
-}
-
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    // 3. Проверка аутентификации
+    // 1) Проверяем сессию
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    // 4. Чтение и валидация тела запроса
-    let requestBody
-    try {
-      requestBody = await request.json()
-    } catch (e) {
-      return NextResponse.json(
-        { error: 'Invalid JSON format' },
-        { status: 400 }
-      )
+    // 2) Читаем тело запроса
+    const { name, type } = await req.json() as RequestBody
+    if (!name || !type) {
+      return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
     }
 
-    if (!validateRequestBody(requestBody)) {
-      return NextResponse.json(
-        {
-          error: 'Invalid request body',
-          details: {
-            required: {
-              name: 'string',
-              type: "'personal' or 'team'"
-            },
-            received: requestBody
-          }
-        },
-        { status: 400 }
-      )
-    }
-
-    // 5. Создание календаря
-    const calendarData: any = {
-      name: requestBody.name,
-      type: requestBody.type,
-      ownerId: session.user.id
-    }
-
-    if (requestBody.type === 'team') {
-      calendarData.members = {
-        connect: [{ id: session.user.id }]
-      }
-    }
-
+    // 3) Создаём календарь, сразу подключая себя в members, если это team
     const calendar = await prisma.calendar.create({
-      data: calendarData,
-      include: {
-        members: true
-      }
+      data: {
+        name,
+        type,
+        ownerId: session.user.id,
+        members: {
+          connect:
+            type === 'team'
+              ? [{ id: session.user.id }]
+              : []
+        },
+      },
     })
 
-    // 6. Успешный ответ
+    // 4) Отдаём созданный объект
     return NextResponse.json(calendar, { status: 201 })
-
-  } catch (error) {
-    // 7. Обработка всех возможных ошибок
-    console.error('Calendar creation error:', error)
-
-    if (error instanceof Error) {
-      // Обработка ошибок Prisma
-      if (error.message.includes('Unique constraint')) {
-        return NextResponse.json(
-          { error: 'Calendar with this name already exists' },
-          { status: 409 }
-        )
-      }
-
-      // Обработка других ошибок БД
-      if (error.message.includes('prisma') || error.message.includes('database')) {
-        return NextResponse.json(
-          { error: 'Database operation failed' },
-          { status: 500 }
-        )
-      }
-    }
-
-    // Общая ошибка сервера
+  } catch (err: unknown) {
+    console.error('🔥 Error in POST /api/calendars/create:', err)
+    const errorMessage = err instanceof Error ? err.message : 'Internal Server Error'
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: errorMessage },
       { status: 500 }
     )
   }
