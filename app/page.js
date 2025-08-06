@@ -1,9 +1,9 @@
 import React from 'react'
 import prisma from '../libs/prisma'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../app/api/auth/[...nextauth]/route'
 import DashboardUI from '../components/DashboardUI'
 import { redirect } from 'next/navigation'
+import { authOptions } from './api/auth/[...nextauth]/auth.config'
 
 export default async function DashboardPage() {
   // 1) Проверяем сессию
@@ -41,7 +41,7 @@ export default async function DashboardPage() {
     where: { inviteeId: userId, status: 'PENDING' },
     include: {
       calendar: { select: { id: true, name: true } },
-      inviter:  { select: { email: true } },
+      inviter: { select: { email: true } },
     },
   })
 

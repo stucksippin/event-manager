@@ -15,14 +15,6 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  console.log('17____________________________________________');
-  // const exists = await prisma.user.findUnique({ where: { email: email } })
-  // if (exists) {
-  //   return NextResponse.json(
-  //     { error: 'Пользователь с таким email уже существует' },
-  //     { status: 409 }
-  //   )
-  // }
 
   console.log('18____________________________________________');
   const hash = await bcrypt.hash(password, 12)
