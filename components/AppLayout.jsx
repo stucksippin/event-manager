@@ -32,9 +32,7 @@ export default function AppLayout({ children }) {
               {children}
             </div>
           </Content>
-          <Footer style={{ textAlign: 'center' }}>
-            Ant Design ©{new Date().getFullYear()}
-          </Footer>
+
         </Layout>
       </Layout>
     </ConfigProvider>

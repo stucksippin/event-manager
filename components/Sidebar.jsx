@@ -32,8 +32,8 @@ export default function Sidebar() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const fetchCalendars = useCalendarStore((s) => s.fetchCalendars)
-  const addCalendar     = useCalendarStore((s) => s.addCalendar)
-  const calendars       = useCalendarStore((s) => s.calendars)
+  const addCalendar = useCalendarStore((s) => s.addCalendar)
+  const calendars = useCalendarStore((s) => s.calendars)
 
   useEffect(() => {
     if (session) fetchCalendars()
@@ -76,11 +76,7 @@ export default function Sidebar() {
           onClick: () => handleCalendarClick(cal.id)
         }))
     },
-    {
-      key: 'export',
-      icon: <FileOutlined />,
-      label: 'Экспорт'
-    }
+
   ]
 
   return (

@@ -31,9 +31,7 @@ export default function RootClientLayout({ children }) {
               {children}
             </div>
           </Content>
-          <Footer style={{ textAlign: 'center' }}>
-            Ant Design ©{new Date().getFullYear()}
-          </Footer>
+
         </Layout>
       </Layout>
     </SessionProvider>
