@@ -7,7 +7,7 @@ import prisma from "@/libs/prisma";
 
 export async function GET(
     req: Request,
-    { params }: { params: { id: string } } // <-- inline-тип, без внешнего алиаса
+    { params }: { params: Promise<{ id: string }> } // <- params как Promise
 ) {
     const session = await getServerSession(authOptions);
 
@@ -15,7 +15,7 @@ export async function GET(
         return NextResponse.json({ error: "Не аутентифицирован" }, { status: 401 });
     }
 
-    const calendarId = params.id;
+    const { id: calendarId } = await params; // <- обязательно await
 
     const calendar = await prisma.calendar.findUnique({
         where: { id: calendarId },
