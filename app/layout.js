@@ -5,8 +5,8 @@ import RootClientLayout from './RootClientLayout'
 import { Suspense } from 'react'
 
 export const metadata = {
-  title: 'Your App',
-  description: '…',
+  title: 'TaskHive',
+  description: 'TaskHive – это веб-приложение для планирования и организации рабочих процессов, объединяющее личные и командные задачи в едином пространстве.',
 }
 
 export default function RootLayout({ children }) {
