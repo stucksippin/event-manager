@@ -15,7 +15,7 @@ export default function LoginPageInner() {
         CredentialsSignin: 'Неверный логин или пароль',
     }
 
-    const [errorMessage, setErrorMessage] = useState < string | null > (null)
+    const [errorMessage, setErrorMessage] = useState(null)
 
     useEffect(() => {
         if (errorCode) {
@@ -25,8 +25,7 @@ export default function LoginPageInner() {
 
     const onFinish = async ({ email, password }) => {
         try {
-            console.log("🔑 Попытка входа:", { email, password }) // логируем данные (пароль лучше только локально!)
-
+            console.log("🔑 Попытка входа:", { email, password })
             const res = await signIn('credentials', {
                 email,
                 password,
