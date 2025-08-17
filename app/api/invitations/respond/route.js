@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../../auth/[...nextauth]/route'
-import prisma from '../../../../libs/prisma'
+import { authOptions } from '@/libs/auth'
+import prisma from '@/libs/prisma'
+
+
 
 export async function POST(req) {
   const { invitationId, action } = await req.json()

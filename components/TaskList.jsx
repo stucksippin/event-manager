@@ -8,10 +8,21 @@ import dayjs from 'dayjs'
 
 const { Title } = Typography
 
-export default function TaskList({ calendarId }) {
+export default function TaskList({ calendarId, selectedDate }) {
   const { tasks, fetchTasks, addTask, updateTask, deleteTask } = useTaskStore()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
+
+
+  // фетч тасок
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    fetchTasks(calendarId).finally(() => setLoading(false))
+  }, [calendarId, fetchTasks])
+
+
 
   useEffect(() => {
     fetchTasks(calendarId)
@@ -21,10 +32,12 @@ export default function TaskList({ calendarId }) {
     setEditingTask(null)
     setIsModalOpen(true)
   }
+
   const openEdit = (task) => {
     setEditingTask(task)
     setIsModalOpen(true)
   }
+
   const closeModal = () => {
     setIsModalOpen(false)
     setEditingTask(null)
@@ -51,10 +64,13 @@ export default function TaskList({ calendarId }) {
 
       <List
         bordered
+        loading={loading}
         dataSource={tasks}
         locale={{ emptyText: 'Задач нет' }}
         renderItem={(task) => (
           <List.Item
+            key={task.id}
+            style={{ position: 'relative' }} // важное: relative для даты
             actions={[
               <EditOutlined key="edit" onClick={() => openEdit(task)} />,
               <DeleteOutlined key="del" onClick={() => deleteTask(task.id)} />
@@ -62,12 +78,26 @@ export default function TaskList({ calendarId }) {
           >
             <List.Item.Meta
               title={task.title}
-              description={dayjs(task.date).format('YYYY-MM-DD HH:mm')}
+              description={task.description}
             />
-            {task.description}
+
+            {/* Дата в правом верхнем углу */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 2,
+                right: 5,
+                fontSize: 12,
+                color: '#888',
+
+              }}
+            >
+              {dayjs(task.date).format('D MMMM YYYY')}
+            </div>
           </List.Item>
         )}
       />
+
 
       <Modal
         title={editingTask ? 'Редактировать задачу' : 'Новая задача'}
@@ -81,7 +111,9 @@ export default function TaskList({ calendarId }) {
           initialValues={{
             title: editingTask?.title,
             description: editingTask?.description,
-            date: editingTask ? dayjs(editingTask.date) : null
+            date: editingTask
+              ? dayjs(editingTask.date)
+              : selectedDate
           }}
         >
           <Form.Item name="title" label="Заголовок" rules={[{ required: true }]}>

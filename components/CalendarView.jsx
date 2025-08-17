@@ -3,19 +3,20 @@
 import { useEffect } from 'react'
 import { Calendar as AntdCalendar, Badge } from 'antd'
 import dayjs from 'dayjs'
+import 'dayjs/locale/ru'
 import useTaskStore from '../store/useTaskStore'
 
-export default function CalendarView({ calendarId }) {
-  // Отдельные селекторы Zustand, чтобы не было бесконечных обновлений
-  const tasks      = useTaskStore(state => state.tasks)
+dayjs.locale('ru')
+
+export default function CalendarView({ calendarId, onDateSelect }) {
+  const tasks = useTaskStore(state => state.tasks)
   const fetchTasks = useTaskStore(state => state.fetchTasks)
 
-  // Подгружаем задачи при монтировании или смене calendarId
   useEffect(() => {
     fetchTasks(calendarId)
   }, [calendarId, fetchTasks])
 
-  // Функция рендера содержимого ячейки с датой
+  // Рендерим только задачи (без даты!)
   const renderDateCell = (value) => {
     const dateStr = value.format('YYYY-MM-DD')
     const dayTasks = tasks.filter(
@@ -34,15 +35,29 @@ export default function CalendarView({ calendarId }) {
     )
   }
 
-  // Новый проп cellRender вместо deprecated dateCellRender
   const cellRender = (current, info) => {
-    // только для обычных «дата»-ячееек
     if (info.type === 'date') {
-      return renderDateCell(current)
+      const isPast = current.isBefore(dayjs(), 'day')
+      return (
+        <div
+          style={{
+            background: isPast ? '#f5f5f5' : undefined,
+            minHeight: 60,
+            pointerEvents: isPast ? 'none' : undefined,
+          }}
+        >
+
+          {renderDateCell(current)}
+        </div>
+      )
     }
-    // для month/year и т.п. рендерим как есть
     return info.originNode
   }
 
-  return <AntdCalendar cellRender={cellRender} />
+  const handleSelect = (value) => {
+    if (value.isBefore(dayjs(), 'day')) return
+    onDateSelect?.(value)
+  }
+
+  return <AntdCalendar cellRender={cellRender} onSelect={handleSelect} />
 }

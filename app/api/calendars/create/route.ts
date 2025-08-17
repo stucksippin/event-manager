@@ -1,9 +1,10 @@
 // app/api/calendars/create/route.ts
 
 import { NextResponse } from 'next/server'
-import prisma from '../../../../libs/prisma'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../../auth/[...nextauth]/route'
+import { authOptions } from '@/libs/auth';
+import prisma from '@/libs/prisma';
+
 
 interface RequestBody {
   name: string;

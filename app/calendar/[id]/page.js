@@ -10,11 +10,14 @@ import {
   Input,
   Button,
   Alert,
+  List,
+  Avatar,
+  Popconfirm,
+  message,
 } from 'antd'
 import useCalendarStore from '../../../store/useCalendarStore'
-import CalendarView from '../../../components/CalendarView'      // ← Импортируем наш календарь
-import TaskList from '../../../components/TaskList'           // ← если хотите ещё и список задач
-import InviteModal from "../../../components/InviteModal"
+import CalendarView from '../../../components/CalendarView'
+import TaskList from '../../../components/TaskList'
 
 const { Content } = Layout
 const { Title, Text } = Typography
@@ -27,11 +30,14 @@ export default function CalendarPage() {
   const fetchCalendars = useCalendarStore((s) => s.fetchCalendars)
 
   const [calendar, setCalendar] = useState(null)
+  const [members, setMembers] = useState([])
+  const [loadingMembers, setLoadingMembers] = useState(false)
+
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteError, setInviteError] = useState(null)
   const [inviteSuccess, setInviteSuccess] = useState(null)
   const [loadingInvite, setLoadingInvite] = useState(false)
-
+  const [selectedDate, setSelectedDate] = useState(null)
   useEffect(() => {
     if (session) fetchCalendars()
   }, [session, fetchCalendars])
@@ -39,6 +45,20 @@ export default function CalendarPage() {
   useEffect(() => {
     setCalendar(calendars.find((c) => c.id === calendarId) || null)
   }, [calendars, calendarId])
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!calendarId) return
+      setLoadingMembers(true)
+      const res = await fetch(`/api/calendars/${calendarId}/members`)
+      if (res.ok) {
+        const data = await res.json()
+        setMembers(data)
+      }
+      setLoadingMembers(false)
+    }
+    fetchMembers()
+  }, [calendarId])
 
   if (status === 'loading' || !session) {
     return <div>Загрузка...</div>
@@ -67,6 +87,9 @@ export default function CalendarPage() {
     } else {
       setInviteSuccess(`Пользователь ${inviteEmail} приглашён`)
       setInviteEmail('')
+      // обновим список участников после приглашения
+      const updated = await fetch(`/api/calendars/${calendarId}/members`)
+      if (updated.ok) setMembers(await updated.json())
     }
   }
 
@@ -74,9 +97,64 @@ export default function CalendarPage() {
     <Content style={{ padding: 24 }}>
       <Card style={{ marginBottom: 24 }}>
         <Title level={2}>{calendar.name}</Title>
-        <Text>Тип: {calendar.type === 'user' ? 'Личный' : 'Командный'}</Text>
+        <Text>{calendar.type === 'user' ? 'Личный' : 'Командный'} календарь</Text>
       </Card>
 
+
+      {/* участники  */}
+      {isTeam && (
+        <Card title="Участники" style={{ marginBottom: 24 }}>
+          <List
+            loading={loadingMembers}
+            dataSource={members}
+            renderItem={(member) => (
+              <List.Item
+                key={member.id}
+                actions={
+                  isOwner && member.id !== session.user.id
+                    ? [
+                      <Popconfirm
+                        key={member.id}
+                        title="Удалить участника?"
+                        description={`Вы уверены, что хотите удалить ${member.email}?`}
+                        okText="Да"
+                        cancelText="Нет"
+                        onConfirm={async () => {
+                          const res = await fetch(
+                            `/api/calendars/${calendarId}/members/${member.id}`,
+                            { method: "DELETE" }
+                          )
+                          if (res.ok) {
+                            setMembers(members.filter((m) => m.id !== member.id))
+                            message.success('Пользователь удален из календаря')
+                          }
+                        }}
+                      >
+                        <Button danger size="small">Удалить</Button>
+                      </Popconfirm>,
+                    ]
+                    : []
+                }
+              >
+                <List.Item.Meta
+                  avatar={<Avatar src={member.image}>{member.name?.[0]}</Avatar>}
+                  title={member.name || member.email}
+                  description={member.email}
+                />
+              </List.Item>
+            )}
+          />
+
+        </Card>
+      )}
+
+      {/* Список задач */}
+      <TaskList calendarId={calendarId} selectedDate={selectedDate} />
+      {/* Основной календарь */}
+      <CalendarView calendarId={calendarId} onDateSelect={setSelectedDate} />
+
+
+      {/* инвайт модалка */}
       {isTeam && isOwner && (
         <Card
           title="Пригласить участника по email"
@@ -100,12 +178,6 @@ export default function CalendarPage() {
           {inviteSuccess && <Alert type="success" message={inviteSuccess} style={{ marginTop: 8 }} />}
         </Card>
       )}
-
-      {/* Если хотите список задач под календарём */}
-      <TaskList calendarId={calendarId} />
-      {/* Основной календарь с задачами */}
-      <CalendarView calendarId={calendarId} />
-
     </Content>
   )
 }

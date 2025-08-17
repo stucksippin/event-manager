@@ -8,7 +8,8 @@ import {
   Button,
   Input,
   Modal,
-  Typography
+  Typography,
+  Tooltip
 } from 'antd'
 import {
   CalendarOutlined,
@@ -43,40 +44,60 @@ export default function Sidebar() {
     router.push(`/calendar/${id}`)
   }
 
+  const wrapLabel = (label) =>
+    collapsed ? <Tooltip title={label}>{label}</Tooltip> : label
+
   const menuItems = [
     {
       key: 'main',
       icon: <FileOutlined />,
-      label: 'Главная',
+      label: wrapLabel('Главная'),
       onClick: () => router.push(`/`)
     },
     {
       key: 'user-calendars',
       icon: <UserOutlined />,
-      label: 'Мои календари',
-      children: calendars
-        .filter((cal) => cal.type === 'user')
-        .map((cal) => ({
-          key: cal.id,
-          label: cal.name,
-          icon: <CalendarOutlined />,
-          onClick: () => handleCalendarClick(cal.id)
-        }))
+      label: wrapLabel('Мои календари'),
+      children:
+        calendars.filter((cal) => cal.type === 'user').length > 0
+          ? calendars
+            .filter((cal) => cal.type === 'user')
+            .map((cal) => ({
+              key: cal.id,
+              label: wrapLabel(cal.name),
+              icon: <CalendarOutlined />,
+              onClick: () => handleCalendarClick(cal.id)
+            }))
+          : [
+            {
+              key: 'no-user-calendars',
+              label: wrapLabel('Календарей нет'),
+              disabled: true
+            }
+          ]
     },
     {
       key: 'team-calendars',
       icon: <TeamOutlined />,
-      label: 'Командные календари',
-      children: calendars
-        .filter((cal) => cal.type === 'team')
-        .map((cal) => ({
-          key: cal.id,
-          label: cal.name,
-          icon: <CalendarOutlined />,
-          onClick: () => handleCalendarClick(cal.id)
-        }))
-    },
-
+      label: wrapLabel('Командные календари'),
+      children:
+        calendars.filter((cal) => cal.type === 'team').length > 0
+          ? calendars
+            .filter((cal) => cal.type === 'team')
+            .map((cal) => ({
+              key: cal.id,
+              label: wrapLabel(cal.name),
+              icon: <CalendarOutlined />,
+              onClick: () => handleCalendarClick(cal.id)
+            }))
+          : [
+            {
+              key: 'no-team-calendars',
+              label: wrapLabel('Календарей нет'),
+              disabled: true
+            }
+          ]
+    }
   ]
 
   return (
@@ -87,7 +108,12 @@ export default function Sidebar() {
         collapsed={collapsed}
         onCollapse={setCollapsed}
       >
-        <Menu theme="dark" mode="inline" items={menuItems} />
+        <Menu
+          theme="dark"
+          mode="inline"
+          inlineCollapsed={collapsed}
+          items={menuItems}
+        />
 
         {session && (
           <>
@@ -99,16 +125,18 @@ export default function Sidebar() {
                 onClick={() => setIsModalOpen(true)}
                 block
               >
-                Новый календарь
+                {!collapsed && 'Новый календарь'}
               </Button>
             </div>
 
             {/* Инфо об аккаунте */}
-            <div style={{ padding: '0 16px', marginTop: 8 }}>
-              <Text style={{ color: '#fff' }}>
-                Аккаунт: {session.user.email}
-              </Text>
-            </div>
+            {!collapsed && (
+              <div style={{ padding: '0 16px', marginTop: 8 }}>
+                <Text style={{ color: '#fff' }}>
+                  Аккаунт: {session.user.email}
+                </Text>
+              </div>
+            )}
 
             {/* Кнопка выхода */}
             <div style={{ padding: 16 }}>
@@ -118,7 +146,7 @@ export default function Sidebar() {
                 block
                 onClick={() => signOut({ callbackUrl: '/login' })}
               >
-                Выйти из аккаунта
+                {!collapsed && 'Выйти из аккаунта'}
               </Button>
             </div>
           </>

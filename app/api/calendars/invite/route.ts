@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../../auth/[...nextauth]/route'  // если твои next-auth маршруты лежат в /api/auth
-import prisma from '../../../../libs/prisma'
+import { authOptions } from '@/libs/auth'
+import prisma from '@/libs/prisma'
 
 export async function POST(req) {
   const { calendarId, email } = await req.json()
 
   // 1) Проверяем сессию
   const session = await getServerSession(authOptions)
-  if (!session) {
+  if (!session || !session.user?.id || !session.user?.email) {
     return NextResponse.json({ error: 'Не аутентифицирован' }, { status: 401 })
+  }
+
+  // 1.1) Запрет приглашать самого себя
+  if (email.trim().toLowerCase() === session.user.email.toLowerCase()) {
+    return NextResponse.json({ error: 'Нельзя пригласить самого себя' }, { status: 400 })
   }
 
   // 2) Проверяем, что текущий пользователь — владелец календаря

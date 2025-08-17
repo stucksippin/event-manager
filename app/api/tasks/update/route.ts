@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../../auth/[...nextauth]/route'
-import prisma from '../../../../libs/prisma'
+import { authOptions } from '@/libs/auth'
+import prisma from '@/libs/prisma'
+
 
 export async function PUT(req) {
   try {
@@ -27,7 +28,7 @@ export async function PUT(req) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
     const cal = task.calendar
-    const isOwner  = cal.ownerId === userId
+    const isOwner = cal.ownerId === userId
     const isMember = cal.type === 'team' && cal.members.some(m => m.id === userId)
     if (!(isOwner || isMember)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
