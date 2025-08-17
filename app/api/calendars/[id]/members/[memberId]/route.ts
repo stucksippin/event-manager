@@ -3,14 +3,10 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/libs/auth";
 import prisma from "@/libs/prisma";
 
-interface Params {
-    params: {
-        id: string;       // calendarId
-        memberId: string; // userId участника
-    };
-}
-
-export async function DELETE(req: Request, { params }: Params) {
+export async function DELETE(
+    req: Request,
+    { params }: { params: { id: string; memberId: string } }
+) {
     const session = await getServerSession(authOptions);
 
     if (!session) {
