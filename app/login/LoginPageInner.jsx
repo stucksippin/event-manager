@@ -15,7 +15,7 @@ export default function LoginPageInner() {
         CredentialsSignin: 'Неверный логин или пароль',
     }
 
-    const [errorMessage, setErrorMessage] = useState(null)
+    const [errorMessage, setErrorMessage] = useState < string | null > (null)
 
     useEffect(() => {
         if (errorCode) {
@@ -24,16 +24,41 @@ export default function LoginPageInner() {
     }, [errorCode])
 
     const onFinish = async ({ email, password }) => {
-        const res = await signIn('credentials', {
-            email,
-            password,
-            redirect: false,
-            callbackUrl: '/',
-        })
-        if (res?.error) {
-            setErrorMessage(errorMessages[res.error] || 'Неизвестная ошибка')
-        } else {
-            router.push(res.url || '/')
+        try {
+            console.log("🔑 Попытка входа:", { email, password }) // логируем данные (пароль лучше только локально!)
+
+            const res = await signIn('credentials', {
+                email,
+                password,
+                redirect: false,
+                callbackUrl: '/',
+            })
+
+            console.log("📡 Ответ от signIn:", res)
+
+            if (!res) {
+                console.error("❌ signIn вернул null/undefined")
+                setErrorMessage('Не удалось выполнить вход: пустой ответ')
+                return
+            }
+
+            if (res.error) {
+                console.error("⚠️ Ошибка входа:", res.error)
+                setErrorMessage(errorMessages[res.error] || `Неизвестная ошибка: ${res.error}`)
+                return
+            }
+
+            if (res.ok && res.url) {
+                console.log("✅ Вход успешен, редирект на:", res.url)
+                router.push(res.url)
+                return
+            }
+
+            console.warn("❓ Неожиданный формат ответа:", res)
+            setErrorMessage('Неожиданный ответ сервера')
+        } catch (err) {
+            console.error("💥 Ошибка при выполнении signIn:", err)
+            setErrorMessage('Произошла внутренняя ошибка')
         }
     }
 
